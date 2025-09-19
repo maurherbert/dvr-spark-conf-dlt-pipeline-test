@@ -1,0 +1,57 @@
+# Delta Live Tables Pipeline Configuration
+# Configuration for the reconciliation demo DLT pipeline
+
+name: reconciliation_demo_gold_pipeline
+target: reconciliation_demo
+
+# Pipeline configuration
+configuration:
+  spark.sql.adaptive.enabled: "true"
+  spark.sql.adaptive.coalescePartitions.enabled: "true"
+  spark.databricks.delta.optimizeWrite.enabled: "true"
+  spark.databricks.delta.autoCompact.enabled: "true"
+
+# Libraries containing the pipeline code
+libraries:
+  - file:
+      path: /Workspace/reconciliation-demo/src/workload_validation/dlt.gold.py
+
+# Development mode settings
+development: true
+
+# Channel for DLT updates
+channel: CURRENT
+
+# Photon acceleration
+photon: true
+
+# Continuous processing
+continuous: false
+
+# Data quality expectations
+expectations:
+  - name: "valid_amounts"
+    constraint: "amount IS NOT NULL AND amount > 0"
+    on_violation: "drop"
+  
+  - name: "valid_dates"
+    constraint: "business_date IS NOT NULL"
+    on_violation: "fail"
+
+# Clusters configuration
+clusters:
+  - name: "reconciliation_cluster"
+    node_type_id: "i3.xlarge"
+    num_workers: 2
+    spark_conf:
+      "spark.databricks.delta.preview.enabled": "true"
+      "spark.sql.adaptive.enabled": "true"
+      "spark.sql.adaptive.coalescePartitions.enabled": "true"
+
+# Notifications
+notifications:
+  - email_recipients:
+      - "data-team@company.com"
+    on_start: false
+    on_success: true
+    on_failure: true
